@@ -291,13 +291,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .ai-typing::after{content:'';animation:dots 1.2s steps(4) infinite}
 @keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
 .ai-input{padding:8px 10px;background:var(--bg2);border-top:1px solid var(--bd);display:flex;gap:6px;align-items:flex-end;flex-shrink:0}
-.ai-input textarea{flex:1;background:var(--bg3);border:1px solid var(--bd2);border-radius:10px;color:var(--t1);font-size:.85rem;padding:8px 12px;outline:none;font-family:var(--fs);resize:none;max-height:80px;line-height:1.4}
-.ai-input textarea:focus{border-color:var(--ac)}
+.ai-input input{flex:1;background:var(--bg3);border:1px solid var(--bd2);border-radius:10px;color:var(--t1);font-size:16px;padding:10px 12px;outline:none;font-family:var(--fs);-webkit-appearance:none;appearance:none}
+.ai-input input:focus{border-color:var(--ac)}
 .ai-send{width:36px;height:36px;border-radius:50%;background:var(--ac);border:none;color:#000;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
 .ai-send:hover{opacity:.85}
 .ai-send:disabled{opacity:.3;cursor:default}
 
 /* Toast */
+#km.open{display:flex}
 #toast{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;padding:7px 16px;font-size:.8rem;color:var(--t1);z-index:500;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .empty{text-align:center;padding:32px 16px;color:var(--t3);font-size:.85rem}
@@ -402,7 +403,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
         <button class="aiq" onclick="aiQ('Welche Temperaturen müssen beim SIP erreicht werden?')">SIP Temperaturen</button>
       </div>
       <div class="ai-msgs" id="aimsgs"><div class="ai-welcome"><div class="ai-wt">Willkommen beim AFL Maintenance Agent</div><div class="ai-ws">Ich kenne die Maschine 54235 in- und auswendig: alle 240 Ventile, 26 Programme, 455 Schritte, Prozessparameter, Taktfolgen und Sensorik.<br><br>Klicke oben auf <strong>🔑 API-Key</strong> und gib deinen Anthropic API-Key ein. Danach kannst du mich alles zur Maschine fragen.</div></div></div>
-      <div class="ai-input"><textarea id="aiinp" rows="1" placeholder="Frage zur Maschine…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSend()}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea><button class="ai-send" onclick="aiSend()">▶</button></div>
+      <div class="ai-input"><input id="aiinp" type="text" enterkeyhint="send" inputmode="text" autocomplete="off" placeholder="Frage zur Maschine…" onkeydown="if(event.key==='Enter'){event.preventDefault();aiSend()}"><button class="ai-send" onclick="aiSend()" aria-label="Senden">▶</button></div>
     </div>
     <!-- Schema / R&I -->
     <div class="pane" id="pane-f" style="padding:0">
@@ -470,6 +471,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="spsr"><input id="spinp" type="text" placeholder="Schritt suchen…" oninput="fltPk()" autocomplete="off"></div>
   <div id="splist"></div>
 </div></div>
+
+<!-- API Key Modal -->
+<div id="km" style="position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+  <div style="background:var(--bg2);border:1px solid var(--bd2);border-radius:14px;padding:20px;width:100%;max-width:380px">
+    <div style="font-size:1rem;font-weight:600;margin-bottom:4px;color:var(--t1)">🔑 API-Key</div>
+    <div style="font-size:.72rem;color:var(--t3);margin-bottom:14px">Anthropic API-Key für den KI-Agent. Wird nur lokal im Browser gespeichert.</div>
+    <input id="kinp" type="text" inputmode="text" autocomplete="off" placeholder="sk-ant-api03-..." style="width:100%;background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;color:var(--t1);font-size:16px;padding:12px;outline:none;font-family:var(--fm);margin-bottom:12px;-webkit-appearance:none">
+    <div style="display:flex;gap:6px">
+      <button onclick="aiKeySave()" style="flex:2;padding:11px;background:var(--ac);color:#000;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:var(--fs)">Speichern</button>
+      <button onclick="aiKeyDel()" style="flex:1;padding:11px;background:var(--bg3);color:var(--rd);border:1px solid var(--bd2);border-radius:8px;font-size:.82rem;cursor:pointer;font-family:var(--fs)">Löschen</button>
+      <button onclick="document.getElementById('km').classList.remove('open')" style="flex:1;padding:11px;background:var(--bg3);color:var(--t2);border:1px solid var(--bd2);border-radius:8px;font-size:.82rem;cursor:pointer;font-family:var(--fs)">Abbruch</button>
+    </div>
+    <div style="font-size:.62rem;color:var(--t3);margin-top:10px;font-family:var(--fm);line-height:1.4">Key holen: console.anthropic.com → API Keys → Create Key</div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -1289,14 +1305,20 @@ Wenn du dir bei etwas nicht sicher bist, sag es. Besser eine ehrliche Unsicherhe
 
 const AI_MSGS=[];
 let AI_LOADING=false;
-function getAiKey(){return localStorage.getItem('afl_api_key')||' ';}
+function getAiKey(){return localStorage.getItem('afl_api_key')||'';}
 function aiSetKey(){
-  const current=getAiKey();
-  const k=prompt('Anthropic API-Key eingeben (...):', current?current:'');
-  if(k===null)return;
-  if(k.trim()){localStorage.setItem('afl_api_key',k.trim());aiCheckKey();toast('✓ API-Key gespeichert');}
-  else{localStorage.removeItem('afl_api_key');document.getElementById('ai-key-btn').textContent='🔑 API-Key';document.getElementById('ai-key-btn').style.cssText='font-size:.6rem';toast('API-Key entfernt');}
+  const m=document.getElementById('km');
+  document.getElementById('kinp').value=getAiKey();
+  m.classList.add('open');
+  setTimeout(()=>document.getElementById('kinp').focus(),100);
 }
+function aiKeySave(){
+  const k=document.getElementById('kinp').value.trim();
+  if(k){localStorage.setItem('afl_api_key',k);aiCheckKey();toast('✓ API-Key gespeichert');}
+  else{localStorage.removeItem('afl_api_key');document.getElementById('ai-key-btn').textContent='🔑 API-Key';document.getElementById('ai-key-btn').style.cssText='font-size:.6rem';}
+  document.getElementById('km').classList.remove('open');
+}
+function aiKeyDel(){localStorage.removeItem('afl_api_key');document.getElementById('kinp').value='';document.getElementById('ai-key-btn').textContent='🔑 API-Key';document.getElementById('ai-key-btn').style.cssText='font-size:.6rem';document.getElementById('km').classList.remove('open');toast('Key entfernt');}
 function aiCheckKey(){const k=getAiKey();if(k){const b=document.getElementById('ai-key-btn');b.textContent='🔑 ✓';b.style.cssText='font-size:.6rem;border-color:var(--gr);color:var(--gr)';}}
 function aiQ(q){document.getElementById('aiinp').value=q;aiSend();}
 async function aiSend(){
