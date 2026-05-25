@@ -391,7 +391,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
       <div class="ai-hdr">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div><div class="ai-hdr-t">🤖 AFL Maintenance Agent</div><div class="ai-hdr-s">54235 · Bausch+Ströbel · Roche KA</div></div>
-          <button class="rp-btn" ontouchend="event.preventDefault();aiSetKey()" onclick="aiSetKey()" id="ai-key-btn" style="font-size:.72rem;padding:8px 14px;min-height:36px">🔑 API-Key</button>
         </div>
       </div>
       <div class="ai-quick" id="aiquick">
@@ -402,7 +401,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
         <button class="aiq" onclick="aiQ('Was bedeutet Taktung X8?')">Taktung X8</button>
         <button class="aiq" onclick="aiQ('Welche Temperaturen müssen beim SIP erreicht werden?')">SIP Temperaturen</button>
       </div>
-      <div class="ai-msgs" id="aimsgs"><div class="ai-welcome"><div class="ai-wt">Willkommen beim AFL Maintenance Agent</div><div class="ai-ws">Ich kenne die Maschine 54235 in- und auswendig: alle 240 Ventile, 26 Programme, 455 Schritte, Prozessparameter, Taktfolgen und Sensorik.<br><br>Klicke oben auf <strong>🔑 API-Key</strong> und gib deinen Anthropic API-Key ein. Danach kannst du mich alles zur Maschine fragen.</div></div></div>
+      <div class="ai-msgs" id="aimsgs"><div class="ai-welcome"><div class="ai-wt">Willkommen beim AFL Maintenance Agent</div><div class="ai-ws">Ich kenne die Maschine 54235 in- und auswendig: alle 240 Ventile, 26 Programme, 455 Schritte, Prozessparameter, Taktfolgen und Sensorik. Frag mich was du wissen willst.</div></div></div>
       <div class="ai-input"><input id="aiinp" type="text" enterkeyhint="send" inputmode="text" autocomplete="off" placeholder="Frage zur Maschine…" onkeydown="if(event.key==='Enter'){event.preventDefault();aiSend()}"><button class="ai-send" onclick="aiSend()" aria-label="Senden">▶</button></div>
     </div>
     <!-- Schema / R&I -->
@@ -472,21 +471,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div id="splist"></div>
 </div></div>
 
-<!-- API Key Modal -->
-<div id="km" style="position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
-  <div style="background:var(--bg2);border:1px solid var(--bd2);border-radius:14px;padding:20px;width:100%;max-width:380px">
-    <div style="font-size:1rem;font-weight:600;margin-bottom:4px;color:var(--t1)">🔑 API-Key</div>
-    <div style="font-size:.72rem;color:var(--t3);margin-bottom:14px">Anthropic API-Key für den KI-Agent. Wird nur lokal im Browser gespeichert.</div>
-    <input id="kinp" type="text" inputmode="text" autocomplete="off" placeholder="sk-ant-api03-..." style="width:100%;background:var(--bg3);border:1px solid var(--bd2);border-radius:8px;color:var(--t1);font-size:16px;padding:12px;outline:none;font-family:var(--fm);margin-bottom:12px;-webkit-appearance:none">
-    <div style="display:flex;gap:6px">
-      <button ontouchend="event.preventDefault();aiKeySave()" onclick="aiKeySave()" style="flex:2;padding:13px;background:var(--ac);color:#000;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;font-family:var(--fs)">Speichern</button>
-      <button ontouchend="event.preventDefault();aiKeyDel()" onclick="aiKeyDel()" style="flex:1;padding:13px;background:var(--bg3);color:var(--rd);border:1px solid var(--bd2);border-radius:8px;font-size:.88rem;cursor:pointer;font-family:var(--fs)">Löschen</button>
-      <button ontouchend="event.preventDefault();document.getElementById('km').classList.remove('open')" onclick="document.getElementById('km').classList.remove('open')" style="flex:1;padding:13px;background:var(--bg3);color:var(--t2);border:1px solid var(--bd2);border-radius:8px;font-size:.88rem;cursor:pointer;font-family:var(--fs)">Abbruch</button>
-    </div>
-    <div style="font-size:.62rem;color:var(--t3);margin-top:10px;font-family:var(--fm);line-height:1.4">Key holen: console.anthropic.com → API Keys → Create Key</div>
-  </div>
-</div>
-
 <div id="toast"></div>
 
 <script>
@@ -507,7 +491,7 @@ function doLogin(){
 }
 function doLogout(){if(!confirm('Abmelden?'))return;U=null;document.getElementById('app').classList.remove('show');document.getElementById('login').style.display='flex';}
 
-function init(){rProgs();bUprog();rStats();aiCheckKey();}
+function init(){rProgs();bUprog();rStats();}
 
 function sw(n,el){
   document.querySelectorAll('.pane').forEach(p=>{p.classList.remove('active');p.style.display='';});
@@ -1305,28 +1289,11 @@ Wenn du dir bei etwas nicht sicher bist, sag es. Besser eine ehrliche Unsicherhe
 
 const AI_MSGS=[];
 let AI_LOADING=false;
-function getAiKey(){return localStorage.getItem('afl_api_key')||'';}
-function aiSetKey(){
-  const m=document.getElementById('km');
-  document.getElementById('kinp').value=getAiKey();
-  m.classList.add('open');
-  setTimeout(()=>document.getElementById('kinp').focus(),100);
-}
-function aiKeySave(){
-  const k=document.getElementById('kinp').value.trim();
-  if(k){localStorage.setItem('afl_api_key',k);aiCheckKey();toast('✓ API-Key gespeichert');}
-  else{localStorage.removeItem('afl_api_key');document.getElementById('ai-key-btn').textContent='🔑 API-Key';document.getElementById('ai-key-btn').style.cssText='font-size:.6rem';}
-  document.getElementById('km').classList.remove('open');
-}
-function aiKeyDel(){localStorage.removeItem('afl_api_key');document.getElementById('kinp').value='';document.getElementById('ai-key-btn').textContent='🔑 API-Key';document.getElementById('ai-key-btn').style.cssText='font-size:.6rem';document.getElementById('km').classList.remove('open');toast('Key entfernt');}
-function aiCheckKey(){const k=getAiKey();if(k){const b=document.getElementById('ai-key-btn');b.textContent='🔑 ✓';b.style.cssText='font-size:.6rem;border-color:var(--gr);color:var(--gr)';}}
 function aiQ(q){document.getElementById('aiinp').value=q;aiSend();}
 async function aiSend(){
   const inp=document.getElementById('aiinp');
   const q=inp.value.trim();if(!q||AI_LOADING)return;
-  const apiKey=getAiKey();
-  if(!apiKey){toast('Zuerst 🔑 API-Key oben eingeben');return;}
-  inp.value='';inp.style.height='auto';
+  inp.value='';
   AI_LOADING=true;
   const msgs=document.getElementById('aimsgs');
   const wel=msgs.querySelector('.ai-welcome');if(wel)wel.remove();
@@ -1336,21 +1303,21 @@ async function aiSend(){
   const typ=document.createElement('div');typ.className='ai-typing';typ.textContent='Denke nach';msgs.appendChild(typ);
   msgs.scrollTop=msgs.scrollHeight;
   let ctx='';
-  if(CP&&VSP.progs[CP]){ctx+=`\nAktives Programm: ${VSP.progs[CP].name} (Prog. ${CP})\n`;}
+  if(CP&&VSP.progs[CP])ctx+=`\nAktives Programm: ${VSP.progs[CP].name} (Prog. ${CP})\n`;
   if(CS){const s=VSP.s[String(CS)];if(s){ctx+=`Aktueller Schritt: ${CS} - ${s.n} (${s.b})\n`;if(s.fw)ctx+=`Formatwerte: ${Object.entries(s.fw).filter(([k,v])=>v!=='0').map(([k,v])=>`${k}=${v}`).join(', ')}\n`;ctx+=`Ventile: ${s.o.map(([v,c])=>`${v}=${c}`).join(', ')}\n`;}}
   const probs=Object.entries(ST.steps).filter(([k,v])=>v.status==='problem');
   if(probs.length)ctx+=`\nProbleme:\n`+probs.map(([seq,sd])=>`  ${seq}: ${VSP.s[seq]?.n||'?'} ${sd.comment?'→ '+sd.comment:''}`).join('\n');
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch('/api/chat',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`${AI_SYS}\n\n═══ AKTUELLER KONTEXT ═══${ctx||'\nKein Programm/Schritt ausgewählt.'}`,messages:AI_MSGS.map(m=>({role:m.role,content:m.content}))})
     });
     typ.remove();
     if(!resp.ok){
       const err=await resp.json().catch(()=>({}));
       const em=document.createElement('div');em.className='ai-msg bot';
-      em.innerHTML=resp.status===401?'⚠ <strong>Ungültiger API-Key.</strong> Klicke oben auf 🔑 und gib einen gültigen Key ein.':`⚠ Fehler: ${err.error?.message||'HTTP '+resp.status}`;
+      em.innerHTML=`⚠ Fehler: ${err.error?.message||err.error||'HTTP '+resp.status}`;
       msgs.appendChild(em);AI_MSGS.pop();
     }else{
       const data=await resp.json();
@@ -1360,7 +1327,7 @@ async function aiSend(){
       bm.innerHTML=text.replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--fm);font-size:.75rem">$1</code>').replace(/\n/g,'<br>');
       msgs.appendChild(bm);
     }
-  }catch(e){typ.remove();const em=document.createElement('div');em.className='ai-msg bot';em.innerHTML='⚠ <strong>Verbindungsfehler.</strong> Internet prüfen.';msgs.appendChild(em);AI_MSGS.pop();}
+  }catch(e){typ.remove();const em=document.createElement('div');em.className='ai-msg bot';em.innerHTML='⚠ Verbindungsfehler.';msgs.appendChild(em);AI_MSGS.pop();}
   AI_LOADING=false;msgs.scrollTop=msgs.scrollHeight;
 }
 
