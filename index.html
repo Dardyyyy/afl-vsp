@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0a0c0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AFL">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>◈ AFL · 54235 · Roche Kaiseraugst</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -609,6 +613,49 @@ function openD(seq){
   document.getElementById('dcmt').value=ss.comment||'';
 
   let html='';
+
+  // DIFF to previous step
+  if(CP&&VSP.progs[CP]){
+    const steps=VSP.progs[CP].steps;
+    const idx=steps.indexOf(seq);
+    if(idx>0){
+      const prevSeq=steps[idx-1];
+      const prevS=VSP.s[String(prevSeq)];
+      if(prevS){
+        const curMap=Object.fromEntries(s.o);
+        const prevMap=Object.fromEntries(prevS.o);
+        const allV=[...new Set([...Object.keys(curMap),...Object.keys(prevMap)])];
+        const opened=[],closed=[],changed=[];
+        for(const v of allV){
+          const c=curMap[v],p=prevMap[v];
+          if(c&&!p)opened.push([v,c]);
+          else if(!c&&p)closed.push([v,p]);
+          else if(c&&p&&c!==p)changed.push([v,p,c]);
+        }
+        if(opened.length||closed.length||changed.length){
+          const vDesc=(v)=>{const d=VSP.vi[v]?.d;return d?`<span style="font-size:.58rem;color:var(--t3);display:block;margin-top:1px">${d.length>35?d.slice(0,33)+'…':d}</span>`:''};
+          const tDesc=(c)=>{if(!c||c==='X'||c==='x')return'Offen';const td=VSP.td?.[c];return td||c;};
+          html+=`<div class="fwsec"><div class="fwtitle">Änderungen vs. Schritt ${prevSeq} (${prevS.n||'—'})</div>`;
+          if(opened.length){
+            html+=`<div style="margin-bottom:8px"><div style="font-size:.65rem;color:var(--gr);font-family:var(--fm);margin-bottom:4px">🟢 NEU GEÖFFNET — ${opened.length} Ventile</div>`;
+            for(const[v,c]of opened)html+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--grd);border-radius:5px;margin-bottom:2px;border-left:3px solid var(--gr)"><div style="min-width:42px;font-family:var(--fm);font-size:.75rem;font-weight:700;color:var(--gr)">${v}</div><div style="flex:1;min-width:0"><div style="font-size:.72rem;color:var(--t1)">${tDesc(c)}</div>${vDesc(v)}</div></div>`;
+            html+=`</div>`;
+          }
+          if(closed.length){
+            html+=`<div style="margin-bottom:8px"><div style="font-size:.65rem;color:var(--rd);font-family:var(--fm);margin-bottom:4px">🔴 GESCHLOSSEN — ${closed.length} Ventile</div>`;
+            for(const[v,c]of closed)html+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--rdd);border-radius:5px;margin-bottom:2px;border-left:3px solid var(--rd)"><div style="min-width:42px;font-family:var(--fm);font-size:.75rem;font-weight:700;color:var(--rd)">${v}</div><div style="flex:1;min-width:0"><div style="font-size:.72rem;color:var(--t2)">War: ${tDesc(c)}</div>${vDesc(v)}</div></div>`;
+            html+=`</div>`;
+          }
+          if(changed.length){
+            html+=`<div style="margin-bottom:8px"><div style="font-size:.65rem;color:var(--yw);font-family:var(--fm);margin-bottom:4px">🔄 TAKTUNG GEÄNDERT — ${changed.length} Ventile</div>`;
+            for(const[v,p,c]of changed)html+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--ywd);border-radius:5px;margin-bottom:2px;border-left:3px solid var(--yw)"><div style="min-width:42px;font-family:var(--fm);font-size:.75rem;font-weight:700;color:var(--yw)">${v}</div><div style="flex:1;min-width:0"><div style="font-size:.72rem;color:var(--t1)">Jetzt: ${tDesc(c)}</div><div style="font-size:.65rem;color:var(--t3)">Vorher: ${tDesc(p)}</div>${vDesc(v)}</div></div>`;
+            html+=`</div>`;
+          }
+          html+=`</div>`;
+        }
+      }
+    }
+  }
 
   // Kommentar from Excel
   if(s.km)html+=`<div class="dkm">💡 ${s.km}</div>`;
@@ -1343,6 +1390,7 @@ window.addEventListener('vsp-ready',()=>{
     document.getElementById('tu').textContent=U.name;init();
   }else{document.getElementById('login').style.display='flex';}
 });
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
 <script src="vsp.js"></script>
 </body>
